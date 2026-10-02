@@ -1,0 +1,10 @@
+# 虚拟环境和本地数据，都不该进版本库
+venv/
+.venv/
+.env
+data/
+logs/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/

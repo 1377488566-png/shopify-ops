@@ -1,0 +1,3 @@
+# 只依赖 requests —— 其余全部使用 Python 标准库（sqlite3 / hmac / hashlib / http.server / urllib）
+# 安装：  .\venv\Scripts\python.exe -m pip install -r requirements.txt
+requests>=2.31

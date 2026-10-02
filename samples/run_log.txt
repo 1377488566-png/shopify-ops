@@ -1,0 +1,101 @@
+==============================================================================
+$ python cli.py sync --mock
+# 第一次同步：python cli.py sync --mock
+==============================================================================
+2026-09-23 21:27:27 | INFO    | sync | 开始同步｜mode=mock｜mode=MOCK(内置假数据) | email_engine=内置英文模板(兜底) | db=C:\Users\13774\projects\shopify-ops\data\shopify.db
+2026-09-23 21:27:27 | INFO    | sync | 上次同步水位：（无，全量拉取）
+2026-09-23 21:27:27 | INFO    | shopify_client | [mock] 返回内置假订单（不联网）
+2026-09-23 21:27:27 | INFO    | sync | 已写入 20 / 20 条
+2026-09-23 21:27:27 | INFO    | sync | 同步完成｜拉取 20 条｜写入 20 条｜页数 1｜新水位 2026-09-23T13:22:27+00:00
+
+=== 同步结果 ===
+模式        : mock
+拉取 / 写入 : 20 / 20 条（1 页）
+水位        : (无)  ->  2026-09-23T13:22:27+00:00
+提示        : 本次全部是内置假数据，没有向任何真实店铺发请求。
+
+==============================================================================
+$ python cli.py sync --mock
+# 再同步一次，验证幂等（订单数应仍为 20，不是 40）：python cli.py sync --mock
+==============================================================================
+2026-09-23 21:27:28 | INFO    | sync | 开始同步｜mode=mock｜mode=MOCK(内置假数据) | email_engine=内置英文模板(兜底) | db=C:\Users\13774\projects\shopify-ops\data\shopify.db
+2026-09-23 21:27:28 | INFO    | sync | 上次同步水位：2026-09-23T13:17:27+00:00
+2026-09-23 21:27:28 | INFO    | shopify_client | [mock] 返回内置假订单（不联网）
+2026-09-23 21:27:28 | INFO    | sync | 已写入 20 / 20 条
+2026-09-23 21:27:28 | INFO    | sync | 同步完成｜拉取 20 条｜写入 20 条｜页数 1｜新水位 2026-09-23T13:22:28+00:00
+
+=== 同步结果 ===
+模式        : mock
+拉取 / 写入 : 20 / 20 条（1 页）
+水位        : 2026-09-23T13:17:27+00:00  ->  2026-09-23T13:22:28+00:00
+提示        : 本次全部是内置假数据，没有向任何真实店铺发请求。
+
+==============================================================================
+$ python cli.py emails --limit 5
+# 生成 5 封英文售后邮件：python cli.py emails --limit 5
+==============================================================================
+邮件引擎：内置英文模板｜待生成 5 封
+
+2026-09-23 21:27:30 | INFO    | email_gen | 未配置 DEEPSEEK_API_KEY，使用内置模板 order=#1001 scenario=shipping_notice
+[1] #1001 | 发货通知 | provider=template
+     Subject: Your order #1001 is on the way
+     Preview: Hi Emily Carter,
+
+2026-09-23 21:27:30 | INFO    | email_gen | 未配置 DEEPSEEK_API_KEY，使用内置模板 order=#1002 scenario=welcome
+[2] #1002 | 欢迎信（新订单待处理） | provider=template
+     Subject: Thank you for your order #1002!
+     Preview: Hi Michael Nguyen,
+
+2026-09-23 21:27:30 | INFO    | email_gen | 未配置 DEEPSEEK_API_KEY，使用内置模板 order=#1003 scenario=welcome
+[3] #1003 | 欢迎信（新订单待处理） | provider=template
+     Subject: Thank you for your order #1003!
+     Preview: Hi Sofia Rossi,
+
+2026-09-23 21:27:30 | INFO    | email_gen | 未配置 DEEPSEEK_API_KEY，使用内置模板 order=#1004 scenario=refund_apology
+[4] #1004 | 退款安抚 | provider=template
+     Subject: About the refund for order #1004
+     Preview: Hi Daniel Okafor,
+
+2026-09-23 21:27:30 | INFO    | email_gen | 未配置 DEEPSEEK_API_KEY，使用内置模板 order=#1005 scenario=welcome
+[5] #1005 | 欢迎信（新订单待处理） | provider=template
+     Subject: Thank you for your order #1005!
+     Preview: Hi Hannah Schmidt,
+
+==============================================================================
+$ python cli.py orders --limit 8
+# 查看订单：python cli.py orders --limit 8
+==============================================================================
+订单号      日期           客户                 金额           支付         发货         退款
+#1001    2026-09-23   Emily Carter       USD 84.00    paid       fulfilled  -
+#1002    2026-09-22   Michael Nguyen     USD 47.50    paid       -          -
+#1003    2026-09-20   Sofia Rossi        USD 35.90    pending    -          -
+#1004    2026-09-20   Daniel Okafor      USD 36.00    refunded   fulfilled  USD 14.40
+#1005    2026-09-19   Hannah Schmidt     USD 142.90   paid       -          -
+#1006    2026-09-18   Liam O'Connell     USD 75.00    cancelled  -          -
+#1007    2026-09-17   Priya Sharma       USD 125.30   paid       fulfilled  -
+#1008    2026-09-15   Noah Bennett       USD 107.40   paid       -          -
+
+==============================================================================
+$ python cli.py stats
+# 统计：python cli.py stats
+==============================================================================
+=== 数据概览 ===
+操作模式      : MOCK（内置假数据）
+邮件引擎      : 内置英文模板（未配置 API key）
+数据库        : C:\Users\13774\projects\shopify-ops\data\shopify.db
+订单总数      : 20
+订单明细行数  : 42
+含退款订单    : 2（退款总额 98.4）
+已生成邮件    : 5 封，覆盖 5 个订单
+邮件按场景    : {'welcome': 3, 'shipping_notice': 1, 'refund_apology': 1}
+邮件按生成器  : {'template': 5}
+同步水位      : 2026-09-23T13:22:28+00:00
+
+==============================================================================
+$ python cli.py export --out samples
+# 导出样本：python cli.py export --out samples
+==============================================================================
+已导出到 C:\Users\13774\projects\shopify-ops\samples
+  - orders_sample.json（5 条订单）
+  - emails_sample.txt（5 封邮件）
+  - stats.json

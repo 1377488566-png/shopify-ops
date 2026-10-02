@@ -1,0 +1,17 @@
+{
+  "orders": 20,
+  "line_items": 42,
+  "orders_with_refund": 2,
+  "refund_total_amount": 98.4,
+  "orders_with_email": 5,
+  "emails": 5,
+  "emails_by_scenario": {
+    "welcome": 3,
+    "shipping_notice": 1,
+    "refund_apology": 1
+  },
+  "emails_by_provider": {
+    "template": 5
+  },
+  "last_sync": "2026-09-23T13:22:28+00:00"
+}

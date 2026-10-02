@@ -1,0 +1,85 @@
+[
+  {
+    "order_number": "#1001",
+    "created_at": "2026-09-23T02:27:28+00:00",
+    "customer": {
+      "name": "Emily Carter",
+      "email": "emily.carter@example.com"
+    },
+    "total": "USD 84.00",
+    "financial_status": "paid",
+    "fulfillment_status": "fulfilled",
+    "refund_amount": 0.0,
+    "refund_count": 0,
+    "items": [
+      "Bamboo Cutting Board Set x2"
+    ]
+  },
+  {
+    "order_number": "#1002",
+    "created_at": "2026-09-22T00:27:28+00:00",
+    "customer": {
+      "name": "Michael Nguyen",
+      "email": "michael.nguyen@example.com"
+    },
+    "total": "USD 47.50",
+    "financial_status": "paid",
+    "fulfillment_status": "",
+    "refund_amount": 0.0,
+    "refund_count": 0,
+    "items": [
+      "Linen Throw Pillow Cover x1",
+      "Ceramic Coffee Mug 350ml x1"
+    ]
+  },
+  {
+    "order_number": "#1003",
+    "created_at": "2026-09-20T19:27:28+00:00",
+    "customer": {
+      "name": "Sofia Rossi",
+      "email": "sofia.rossi@example.com"
+    },
+    "total": "USD 35.90",
+    "financial_status": "pending",
+    "fulfillment_status": "",
+    "refund_amount": 0.0,
+    "refund_count": 0,
+    "items": [
+      "Wireless Charging Pad x1"
+    ]
+  },
+  {
+    "order_number": "#1004",
+    "created_at": "2026-09-20T03:27:28+00:00",
+    "customer": {
+      "name": "Daniel Okafor",
+      "email": "daniel.okafor@example.com"
+    },
+    "total": "USD 36.00",
+    "financial_status": "refunded",
+    "fulfillment_status": "fulfilled",
+    "refund_amount": 14.4,
+    "refund_count": 1,
+    "items": [
+      "Ceramic Coffee Mug 350ml x2"
+    ]
+  },
+  {
+    "order_number": "#1005",
+    "created_at": "2026-09-19T13:27:28+00:00",
+    "customer": {
+      "name": "Hannah Schmidt",
+      "email": "hannah.schmidt@example.com"
+    },
+    "total": "USD 142.90",
+    "financial_status": "paid",
+    "fulfillment_status": "",
+    "refund_amount": 0.0,
+    "refund_count": 0,
+    "items": [
+      "Linen Throw Pillow Cover x2",
+      "Cotton Bath Towel 2-Pack x2",
+      "Wireless Charging Pad x1"
+    ]
+  }
+]

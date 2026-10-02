@@ -1,0 +1,19 @@
+# webhook 冒烟测试：真起服务 + 真发请求 + 真验签（SHOPIFY_WEBHOOK_SECRET 已设置、MOCK=true）
+
+[healthz] 200 :: shopify-ops webhook is up (mock mode)
+[错误签名 -> 期望 401] 实际 401 :: 'invalid signature'
+[缺少签名 -> 期望 401] 实际 401 :: 'invalid signature'
+[正确签名 -> 期望 200] 实际 200 :: 'ok'
+[refunds/create -> 期望 200] 实际 200 :: 'ok'
+
+------------------------------------------------------------
+服务端日志（节选）:
+2026-09-23 21:27:37 | INFO    | webhook | Webhook 服务已启动：http://127.0.0.1:8123/webhook ｜mode=mock
+2026-09-23 21:27:37 | INFO    | webhook | 本地联调：用内网穿透工具把 8123 端口映射成公网 HTTPS，再填到 Shopify 后台 Webhooks
+2026-09-23 21:27:37 | WARNING | webhook | 验签失败，拒绝处理（topic=orders/create）
+2026-09-23 21:27:37 | WARNING | webhook | 验签失败，拒绝处理（topic=orders/create）
+2026-09-23 21:27:37 | INFO    | webhook | 验签通过 topic=orders/create
+2026-09-23 21:27:37 | INFO    | webhook | 订单已入库：#999001
+2026-09-23 21:27:37 | INFO    | webhook | 验签通过 topic=refunds/create
+2026-09-23 21:27:37 | INFO    | webhook | 收到退款事件 refund_id=999001 order_id=None
+2026-09-23 21:27:37 | WARNING | webhook | 退款事件里没有 order_id，跳过

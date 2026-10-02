@@ -1,0 +1,120 @@
+==============================================================================
+邮件 #5 | 订单 #1005 | 场景 欢迎信（新订单待处理）
+收件人 : Hannah Schmidt <hannah.schmidt@example.com>
+生成器 : template | 状态 draft | 2026-09-23T13:27:30+00:00
+Subject: Thank you for your order #1005!
+------------------------------------------------------------------------------
+Hi Hannah Schmidt,
+
+Thank you so much for shopping with us! We have received your order #1005 and our team is already preparing it for shipment.
+
+Order summary
+-------------
+Items:    Linen Throw Pillow Cover x2, Cotton Bath Towel 2-Pack x2, Wireless Charging Pad x1
+Total:    USD 142.90
+Placed:   2026-09-19
+
+You will receive a shipping confirmation email with tracking details as soon as your parcel leaves our warehouse. If you need to change anything about this order, simply reply to this email within the next 12 hours and we will do our best to help.
+
+Thanks again for choosing us.
+
+Warm regards,
+Customer Care Team
+
+
+==============================================================================
+邮件 #4 | 订单 #1004 | 场景 退款安抚
+收件人 : Daniel Okafor <daniel.okafor@example.com>
+生成器 : template | 状态 draft | 2026-09-23T13:27:30+00:00
+Subject: About the refund for order #1004
+------------------------------------------------------------------------------
+Hi Daniel Okafor,
+
+Thank you for reaching out, and I am sorry that order #1004 did not work out as expected. I completely understand how disappointing that is.
+
+We have processed a refund of USD 14.40 back to your original payment method. Depending on your bank or card issuer, the amount usually appears within 5-10 business days. If it has not shown up after that window, just reply to this email and I will chase it for you personally.
+
+Order reference
+---------------
+Order:  #1004
+Items:  Ceramic Coffee Mug 350ml x2
+Total:  USD 36.00
+
+Your feedback matters to us, and I have shared it with the product team so we can do better next time. If you would like to give us another chance, I would be glad to send you a personal discount code for your next order.
+
+Sincerely,
+Customer Care Team
+
+
+==============================================================================
+邮件 #3 | 订单 #1003 | 场景 欢迎信（新订单待处理）
+收件人 : Sofia Rossi <sofia.rossi@example.com>
+生成器 : template | 状态 draft | 2026-09-23T13:27:30+00:00
+Subject: Thank you for your order #1003!
+------------------------------------------------------------------------------
+Hi Sofia Rossi,
+
+Thank you so much for shopping with us! We have received your order #1003 and our team is already preparing it for shipment.
+
+Order summary
+-------------
+Items:    Wireless Charging Pad x1
+Total:    USD 35.90
+Placed:   2026-09-20
+
+You will receive a shipping confirmation email with tracking details as soon as your parcel leaves our warehouse. If you need to change anything about this order, simply reply to this email within the next 12 hours and we will do our best to help.
+
+Thanks again for choosing us.
+
+Warm regards,
+Customer Care Team
+
+
+==============================================================================
+邮件 #2 | 订单 #1002 | 场景 欢迎信（新订单待处理）
+收件人 : Michael Nguyen <michael.nguyen@example.com>
+生成器 : template | 状态 draft | 2026-09-23T13:27:30+00:00
+Subject: Thank you for your order #1002!
+------------------------------------------------------------------------------
+Hi Michael Nguyen,
+
+Thank you so much for shopping with us! We have received your order #1002 and our team is already preparing it for shipment.
+
+Order summary
+-------------
+Items:    Linen Throw Pillow Cover x1, Ceramic Coffee Mug 350ml x1
+Total:    USD 47.50
+Placed:   2026-09-22
+
+You will receive a shipping confirmation email with tracking details as soon as your parcel leaves our warehouse. If you need to change anything about this order, simply reply to this email within the next 12 hours and we will do our best to help.
+
+Thanks again for choosing us.
+
+Warm regards,
+Customer Care Team
+
+
+==============================================================================
+邮件 #1 | 订单 #1001 | 场景 发货通知
+收件人 : Emily Carter <emily.carter@example.com>
+生成器 : template | 状态 draft | 2026-09-23T13:27:30+00:00
+Subject: Your order #1001 is on the way
+------------------------------------------------------------------------------
+Hi Emily Carter,
+
+Good news - your order #1001 has just been shipped!
+
+What is in the parcel
+---------------------
+Bamboo Cutting Board Set x2
+Order total: USD 84.00
+
+Your tracking number will be activated within 24 hours, and you can follow the parcel using the link in your shipping confirmation. Most deliveries arrive within 3-7 business days depending on your location.
+
+If anything looks wrong when the parcel arrives, reply to this email and we will sort it out right away - no lengthy forms, no hassle.
+
+Thank you for your patience and for shopping with us.
+
+Best regards,
+Customer Care Team
+
