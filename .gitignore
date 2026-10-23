@@ -8,3 +8,6 @@ __pycache__/
 *.pyc
 *.pyo
 .pytest_cache/
+
+# 本地备份文件（改配置前留的底）
+*.bak

@@ -105,6 +105,13 @@ class Config:
     deepseek_api_key: str
     deepseek_base_url: str
     deepseek_model: str
+    smtp_host: str
+    smtp_port: int
+    smtp_user: str
+    smtp_password: str
+    smtp_from_addr: str
+    smtp_from_name: str
+    smtp_starttls: bool
     mock: bool
     db_path: Path
 
@@ -121,6 +128,18 @@ class Config:
         return bool(self.deepseek_api_key)
 
     @property
+    def has_smtp(self) -> bool:
+        """有没有配 SMTP；没有就走 console 模式（把邮件打到日志，不真发）。"""
+        return bool(self.smtp_host)
+
+    @property
+    def mail_mode(self) -> str:
+        """给日志/页面看的一行邮件发送模式（不含密码）。"""
+        if not self.smtp_host:
+            return "console(不真发)"
+        return f"smtp({self.smtp_host}:{self.smtp_port})"
+
+    @property
     def api_base_url(self) -> str:
         """Admin REST API 的根地址。"""
         return f"https://{self.shop}/admin/api/{self.api_version}"
@@ -129,7 +148,7 @@ class Config:
         """给日志/CLI 看的一行配置摘要（**不含任何密钥**）。"""
         mode = "MOCK(内置假数据)" if self.is_mock else f"LIVE({self.shop})"
         llm = f"DeepSeek:{self.deepseek_model}" if self.has_llm else "内置英文模板(兜底)"
-        return f"mode={mode} | email_engine={llm} | db={self.db_path}"
+        return f"mode={mode} | email_engine={llm} | sender={self.mail_mode} | db={self.db_path}"
 
     # ---------- 构造 ----------
 
@@ -146,6 +165,13 @@ class Config:
             deepseek_api_key=_get("DEEPSEEK_API_KEY"),
             deepseek_base_url=_get("DEEPSEEK_BASE_URL", "https://api.deepseek.com"),
             deepseek_model=_get("DEEPSEEK_MODEL", "deepseek-chat"),
+            smtp_host=_get("SMTP_HOST"),
+            smtp_port=int(_get("SMTP_PORT", "587")),
+            smtp_user=_get("SMTP_USER"),
+            smtp_password=_get("SMTP_PASSWORD"),
+            smtp_from_addr=_get("SMTP_FROM_ADDR"),
+            smtp_from_name=_get("SMTP_FROM_NAME", "Customer Care"),
+            smtp_starttls=_get_flag("SMTP_STARTTLS", default=True),
             mock=_get_flag("MOCK", default=False) or force_mock,
             db_path=Path(db_raw) if db_raw else DEFAULT_DB_PATH,
         )

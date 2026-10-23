@@ -31,14 +31,17 @@ from config import Config, setup_logging  # noqa: E402
 from db import (  # noqa: E402
     OrderRow,
     connect,
+    fetch_email,
     fetch_emails,
     fetch_order,
     fetch_orders,
     init_db,
     insert_email,
+    reset_email_to_draft,
     stats as db_stats,
 )
 from email_gen import SCENARIO_LABELS, detect_scenario, generate_email  # noqa: E402
+from smtp_client import send_email  # noqa: E402
 from sync import run_sync  # noqa: E402
 
 log = setup_logging("webapp")
@@ -204,6 +207,7 @@ def page_index(request: Request, limit: int = 20) -> HTMLResponse:
             "scenario_labels": SCENARIO_LABELS,
             "mode": "mock" if cfg.is_mock else f"live:{cfg.shop}",
             "engine": f"deepseek:{cfg.deepseek_model}" if cfg.has_llm else "内置英文模板",
+            "sender": cfg.mail_mode,
         },
     )
 
@@ -219,7 +223,8 @@ def page_order(request: Request, order_id: int) -> HTMLResponse:
         emails = [
             dict(r)
             for r in conn.execute(
-                "SELECT id, scenario, subject, body, provider, status, generated_at "
+                "SELECT id, scenario, subject, body, provider, status, generated_at, "
+                "sent_at, fail_reason "
                 "FROM emails WHERE order_id = ? ORDER BY id DESC",
                 (order_id,),
             ).fetchall()
@@ -234,6 +239,7 @@ def page_order(request: Request, order_id: int) -> HTMLResponse:
             "order": data,
             "emails": emails,
             "scenario_labels": SCENARIO_LABELS,
+            "sender": get_config().mail_mode,
         },
     )
 
@@ -257,6 +263,42 @@ def action_generate_email(order_id: int) -> RedirectResponse:
     finally:
         conn.close()
     return RedirectResponse(f"/order/{order_id}", status_code=303)
+
+
+@app.post("/email/{email_id}/send")
+def action_send_email(email_id: int, order_id: int = 0) -> RedirectResponse:
+    """发送一封已生成的邮件（表单提交，发完跳回订单页）。
+
+    email_id 来自路径且是 int，FastAPI 已做类型校验；
+    收件地址一律从数据库里按 order_id 关联取，**不接受任何外部传入的地址**，避免被当成转发器滥用。
+    """
+    conn = open_db()
+    try:
+        row = fetch_email(conn, email_id)
+        if row is None:
+            return RedirectResponse("/", status_code=303)
+        # 目标订单以数据库里的归属为准，忽略表单传入值，避免越权跳转
+        target = order_id or row["order_id"]
+        result = send_email(conn, email_id=email_id, config=get_config())
+        log.info("发送结果 email_id=%s mode=%s ok=%s", email_id, result.mode, result.ok)
+    finally:
+        conn.close()
+    return RedirectResponse(f"/order/{target}", status_code=303)
+
+
+@app.post("/email/{email_id}/retry")
+def action_retry_email(email_id: int, order_id: int = 0) -> RedirectResponse:
+    """把 failed 的邮件改回 draft，回到待发送状态（不直接重发，让人再确认一次）。"""
+    conn = open_db()
+    try:
+        row = fetch_email(conn, email_id)
+        if row is None:
+            return RedirectResponse("/", status_code=303)
+        target = order_id or row["order_id"]
+        reset_email_to_draft(conn, email_id)
+    finally:
+        conn.close()
+    return RedirectResponse(f"/order/{target}", status_code=303)
 
 
 @app.post("/sync")

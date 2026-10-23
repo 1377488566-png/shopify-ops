@@ -44,7 +44,18 @@
   .email{border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;
          background:var(--panel)}
   .email h3{margin:0 0 8px;font-size:14px}
-  .meta{font-size:12px;color:var(--dim);display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+  .meta{font-size:12px;color:var(--dim);display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px;
+        align-items:center}
+  .st{display:inline-block;padding:1px 8px;border-radius:99px;font-size:11px;font-weight:600;
+      border:1px solid currentColor}
+  .st-draft{color:#d5b96b}
+  .st-sent{color:#7ad39a}
+  .st-failed{color:#ef7b7b}
+  .acts{display:flex;gap:8px;margin:0 0 12px}
+  .acts form{margin:0}
+  .acts button{font-size:12px;padding:5px 12px}
+  .reason{font-size:12px;color:#ef7b7b;margin:0 0 12px;word-break:break-word}
+  .hint{font-size:12px;color:var(--dim);margin:8px 0 0}
   .empty{color:var(--dim);padding:18px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius)}
   ul{margin:0;padding-left:18px}
   li{margin:2px 0}
@@ -95,17 +106,36 @@
       <div class="email">
         <h3>{{ e.subject }}</h3>
         <div class="meta">
+          <span class="st st-{{ e.status }}">{% if e.status == 'sent' %}已发送{% elif e.status == 'failed' %}发送失败{% else %}草稿{% endif %}</span>
           <span>{{ scenario_labels.get(e.scenario, e.scenario) }}</span>
           <span>引擎：{{ e.provider }}</span>
-          <span>状态：{{ e.status }}</span>
-          <span>{{ e.generated_at }}</span>
+          {% if e.sent_at %}<span>发送于 {{ e.sent_at }}</span>{% endif %}
+          {% if e.generated_at %}<span>生成于 {{ e.generated_at }}</span>{% endif %}
         </div>
+        {% if e.fail_reason %}
+        <div class="reason">失败原因：{{ e.fail_reason }}</div>
+        {% endif %}
+        {% if e.status != 'sent' %}
+        <div class="acts">
+          <form method="post" action="/email/{{ e.id }}/send">
+            <input type="hidden" name="order_id" value="{{ order.id }}">
+            <button type="submit">发送</button>
+          </form>
+          {% if e.status == 'failed' %}
+          <form method="post" action="/email/{{ e.id }}/retry">
+            <input type="hidden" name="order_id" value="{{ order.id }}">
+            <button type="submit">重试（改回草稿）</button>
+          </form>
+          {% endif %}
+        </div>
+        {% endif %}
         <pre>{{ e.body }}</pre>
       </div>
       {% endfor %}
     {% else %}
       <div class="empty">还没有生成邮件。点右上角按钮生成一封。</div>
     {% endif %}
+    <p class="hint">发送模式：{{ sender }} —— 未配置 SMTP 时会输出到日志并把状态记为已发送，便于本地/线上演示。</p>
   </section>
 </main>
 </body>

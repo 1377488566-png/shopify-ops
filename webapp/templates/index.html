@@ -74,6 +74,7 @@
     {{ 'MOCK · 内置假数据' if mode == 'mock' else mode }}
   </span>
   <span class="badge">邮件引擎：{{ engine }}</span>
+  <span class="badge">发送模式：{{ sender }}</span>
   <span class="spacer"></span>
   <form method="post" action="/sync" style="margin:0">
     <button type="submit">同步订单</button>
@@ -91,6 +92,10 @@
       <div class="card"><div class="k">退款总额</div>
         <div class="v">{{ '%.2f'|format(stats.refund_total_amount) }}</div></div>
       <div class="card"><div class="k">已生成邮件</div><div class="v">{{ stats.emails }}</div></div>
+      <div class="card"><div class="k">已发送</div><div class="v">{{ stats.emails_sent }}</div></div>
+      {% if stats.emails_failed %}
+      <div class="card"><div class="k">发送失败</div><div class="v">{{ stats.emails_failed }}</div></div>
+      {% endif %}
       <div class="card"><div class="k">覆盖订单</div><div class="v">{{ stats.orders_with_email }}</div></div>
     </div>
   </section>

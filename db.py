@@ -72,7 +72,8 @@ CREATE TABLE IF NOT EXISTS emails (
     provider     TEXT NOT NULL,               -- deepseek / template
     status       TEXT NOT NULL DEFAULT 'draft',  -- draft / sent / failed
     generated_at TEXT,
-    sent_at      TEXT
+    sent_at      TEXT,
+    fail_reason  TEXT                        -- 发送失败原因（可重试）
 );
 
 CREATE TABLE IF NOT EXISTS sync_state (
@@ -103,8 +104,9 @@ def connect(db_path: Path | str) -> sqlite3.Connection:
 
 
 def init_db(conn: sqlite3.Connection) -> None:
-    """建表（幂等）。"""
+    """建表（幂等）+ 给老库补列。"""
     conn.executescript(SCHEMA)
+    _migrate(conn)
     conn.commit()
     log.debug("数据库表已就绪")
 
@@ -376,6 +378,47 @@ def mark_email_sent(conn: sqlite3.Connection, email_id: int) -> None:
     conn.commit()
 
 
+def mark_email_failed(conn: sqlite3.Connection, email_id: int, reason: str) -> None:
+    """发送失败：状态置 failed 并记下原因，后续可 retry 重新变回 draft。"""
+    conn.execute(
+        "UPDATE emails SET status = 'failed', fail_reason = ? WHERE id = ?",
+        (reason[:500], email_id),
+    )
+    conn.commit()
+
+
+def reset_email_to_draft(conn: sqlite3.Connection, email_id: int) -> None:
+    """把 failed 的信改回 draft，允许重发。"""
+    conn.execute(
+        "UPDATE emails SET status = 'draft', fail_reason = NULL WHERE id = ? AND status = 'failed'",
+        (email_id,),
+    )
+    conn.commit()
+
+
+def fetch_email(conn: sqlite3.Connection, email_id: int) -> sqlite3.Row | None:
+    """取单封邮件（带订单号和收件人），供发送层和详情页用。"""
+    return conn.execute(
+        """
+        SELECT e.id, e.order_id, e.scenario, e.subject, e.body, e.provider,
+               e.status, e.generated_at, e.sent_at, e.fail_reason,
+               o.order_number, o.customer_email, o.customer_name
+        FROM emails e JOIN orders o ON o.id = e.order_id
+        WHERE e.id = ?
+        """,
+        (email_id,),
+    ).fetchone()
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """老库补列：CREATE TABLE IF NOT EXISTS 不会给已存在的表加字段。"""
+    cols = {r["name"] for r in conn.execute("PRAGMA table_info(emails)").fetchall()}
+    if "fail_reason" not in cols:
+        conn.execute("ALTER TABLE emails ADD COLUMN fail_reason TEXT")
+        conn.commit()
+        log.info("已为老库补上 emails.fail_reason 列")
+
+
 # --------------------------------------------------------------------------
 # 统计
 # --------------------------------------------------------------------------
@@ -398,6 +441,8 @@ def stats(conn: sqlite3.Connection) -> dict[str, Any]:
         ),
         "orders_with_email": scalar("SELECT COUNT(DISTINCT order_id) FROM emails"),
         "emails": scalar("SELECT COUNT(*) FROM emails"),
+        "emails_sent": scalar("SELECT COUNT(*) FROM emails WHERE status = 'sent'"),
+        "emails_failed": scalar("SELECT COUNT(*) FROM emails WHERE status = 'failed'"),
         "emails_by_scenario": by_scenario,
         "emails_by_provider": {
             row["provider"]: row["n"]
