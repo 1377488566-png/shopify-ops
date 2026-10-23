@@ -100,6 +100,46 @@ C:\Users\13774\AppData\Local\Programs\Python\Python312\python.exe -m venv venv
 
 > 没配 `DEEPSEEK_API_KEY` 也能跑完整流程，邮件会用内置英文模板生成（`provider=template`）。
 
+### 3.1 Web 界面（FastAPI）
+
+命令行之外还有一层浏览器界面，**同一个数据库、同一套业务逻辑**：
+
+```powershell
+# 装依赖（requirements.txt 已包含 fastapi / uvicorn / jinja2）
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+
+# 起服务
+.\venv\Scripts\python.exe -m uvicorn webapp.server:app --host 127.0.0.1 --port 8000
+```
+
+然后打开 
+
+| 地址 | 内容 |
+| --- | --- |
+| `http://127.0.0.1:8000/` | 运营看板：6 个指标卡 + 订单表 + 最近邮件 |
+| `http://127.0.0.1:8000/order/5001` | 订单详情 + 一键生成英文售后邮件 |
+| `http://127.0.0.1:8000/docs` | 自动生成的 API 文档（可直接在页面上点 "Try it out"） |
+
+Web 层只做三件事，**没有改动原有任何模块**：
+
+1. 每个请求单独开一个 SQLite 连接（`sqlite3` 连接不能跨线程共享），用完即关；
+2. 把 CLI 里那几段「取数 → 生成 → 落库」搬成路由，复用 `db.py` / `email_gen.py` / `sync.py`；
+3. 页面服务端渲染（Jinja2 + 内联 CSS），**零前端构建**，任何机器 clone 下来就能开。
+
+### 3.2 公网部署（Render 免费层）
+
+仓库里带了 `render.yaml`，在 [Render](https://render.com) 上选 **New → Blueprint** 指向本仓库即可，
+会自动按下面的配置建服务：
+
+- 构建：`pip install -r requirements.txt`
+- 启动：`uvicorn webapp.server:app --host 0.0.0.0 --port $PORT`
+- 健康检查：`/api/health`
+
+`bootstrap.py` 的作用：Render 的磁盘是临时的，容器重启后 SQLite 是空的，首页会变成空表。
+手动跑一次 `python bootstrap.py` 会在**库为空时**播种 20 条 mock 订单，已有数据则跳过（实测：空库播种 20 条，第二次运行日志为「数据库已有数据，跳过播种」）。
+
+> 免费层的限制：15 分钟无访问会休眠，下次访问冷启动约 30-60 秒；磁盘不持久，重启后需要重新播种。
+
 ### 全部命令
 
 | 命令 | 作用 |
