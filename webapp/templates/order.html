@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ order.order_number }} · 订单详情</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a;
+    --text:#e6e9ef; --dim:#8b94a7; --accent:#5b9dff; --ok:#3ecf8e;
+    --warn:#f5b942; --bad:#ef5f5f; --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+  header{display:flex;align-items:center;gap:16px;padding:16px 24px;
+         border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0}
+  header h1{font-size:17px;margin:0;font-weight:600}
+  .spacer{flex:1}
+  main{padding:24px;max-width:980px;margin:0 auto}
+  section{margin-bottom:26px}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);
+     margin:0 0 12px;font-weight:600}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px}
+  .kv{display:grid;grid-template-columns:120px 1fr;gap:9px 16px;font-size:13px}
+  .kv dt{color:var(--dim)}
+  .kv dd{margin:0;font-variant-numeric:tabular-nums}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  button{font:inherit;font-size:13px;padding:8px 17px;border-radius:8px;cursor:pointer;
+         border:1px solid #2f5fa8;background:#1c3354;color:#cfe0ff;transition:.15s}
+  button:hover{background:#24426b}
+  button.ghost{background:transparent;border-color:var(--line);color:var(--dim)}
+  button.ghost:hover{color:var(--text);border-color:#3a4150}
+  .pill{display:inline-block;font-size:11px;padding:1px 8px;border-radius:99px;
+        border:1px solid var(--line);color:var(--dim)}
+  .pill.paid{color:var(--ok);border-color:#1c4a35}
+  .pill.refunded,.pill.cancelled{color:var(--bad);border-color:#4a2020}
+  .pill.fulfilled{color:var(--accent);border-color:#1f3a63}
+  .pill.pending{color:var(--warn);border-color:#4a3a17}
+  pre{white-space:pre-wrap;word-break:break-word;background:var(--panel2);
+      border:1px solid var(--line);border-radius:8px;padding:14px;margin:0;font-size:13px;
+      font-family:"Cascadia Mono",Consolas,monospace;line-height:1.75}
+  .email{border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:14px;
+         background:var(--panel)}
+  .email h3{margin:0 0 8px;font-size:14px}
+  .meta{font-size:12px;color:var(--dim);display:flex;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+  .empty{color:var(--dim);padding:18px;text-align:center;border:1px dashed var(--line);border-radius:var(--radius)}
+  ul{margin:0;padding-left:18px}
+  li{margin:2px 0}
+</style>
+</head>
+<body>
+<header>
+  <a href="/">← 返回列表</a>
+  <h1 style="margin-left:6px">{{ order.order_number }}</h1>
+  <span class="pill {{ order.financial_status }}">{{ order.financial_status or '—' }}</span>
+  <span class="pill {{ order.fulfillment_status }}">{{ order.fulfillment_status or '—' }}</span>
+  <span class="spacer"></span>
+  <form method="post" action="/order/{{ order.id }}/email" style="margin:0">
+    <button type="submit">生成英文售后邮件</button>
+  </form>
+</header>
+
+<main>
+  <section>
+    <h2>订单信息</h2>
+    <div class="panel">
+      <dl class="kv">
+        <dt>订单号</dt><dd>{{ order.order_number }}</dd>
+        <dt>客户</dt><dd>{{ order.customer_name }} &lt;{{ order.customer_email }}&gt;</dd>
+        <dt>下单时间</dt><dd>{{ order.created_at or '—' }}</dd>
+        <dt>金额</dt><dd>{{ order.currency }} {{ '%.2f'|format(order.total_price) }}</dd>
+        <dt>退款</dt>
+        <dd>
+          {% if order.refund_count %}
+            {{ order.refund_count }} 笔 / {{ order.currency }} {{ '%.2f'|format(order.refund_amount) }}
+          {% else %}无{% endif %}
+        </dd>
+        <dt>场景判定</dt><dd>{{ scenario_labels.get(order.scenario, order.scenario) }}</dd>
+        <dt>商品</dt>
+        <dd>
+          {% if order["items"] %}
+          <ul>{% for it in order["items"] %}<li>{{ it }}</li>{% endfor %}</ul>
+          {% else %}—{% endif %}
+        </dd>
+      </dl>
+    </div>
+  </section>
+
+  <section>
+    <h2>已生成的邮件（{{ emails|length }}）</h2>
+    {% if emails %}
+      {% for e in emails %}
+      <div class="email">
+        <h3>{{ e.subject }}</h3>
+        <div class="meta">
+          <span>{{ scenario_labels.get(e.scenario, e.scenario) }}</span>
+          <span>引擎：{{ e.provider }}</span>
+          <span>状态：{{ e.status }}</span>
+          <span>{{ e.generated_at }}</span>
+        </div>
+        <pre>{{ e.body }}</pre>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty">还没有生成邮件。点右上角按钮生成一封。</div>
+    {% endif %}
+  </section>
+</main>
+</body>
+</html>

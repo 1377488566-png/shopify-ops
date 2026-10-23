@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shopify 运营控制台</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel2:#1e222b; --line:#2a2f3a;
+    --text:#e6e9ef; --dim:#8b94a7; --accent:#5b9dff; --ok:#3ecf8e;
+    --warn:#f5b942; --bad:#ef5f5f; --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+       font:14px/1.6 -apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+  header{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+         padding:16px 24px;border-bottom:1px solid var(--line);background:var(--panel);
+         position:sticky;top:0;z-index:10}
+  header h1{font-size:17px;margin:0;font-weight:600;letter-spacing:.3px}
+  .badge{font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid var(--line);
+         color:var(--dim);background:var(--panel2)}
+  .badge.mock{color:var(--warn);border-color:#4a3a17;background:#241d0f}
+  .badge.live{color:var(--ok);border-color:#1c4a35;background:#0f241b}
+  .spacer{flex:1}
+  main{padding:24px;max-width:1180px;margin:0 auto}
+  section{margin-bottom:28px}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);
+     margin:0 0 12px;font-weight:600}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .card .k{font-size:12px;color:var(--dim);margin-bottom:6px}
+  .card .v{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+  table{width:100%;border-collapse:collapse;background:var(--panel);
+        border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--line);font-size:13px}
+  th{color:var(--dim);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.6px;
+     background:var(--panel2)}
+  tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:var(--panel2)}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .num{font-variant-numeric:tabular-nums;text-align:right}
+  .pill{display:inline-block;font-size:11px;padding:1px 8px;border-radius:99px;
+        border:1px solid var(--line);color:var(--dim)}
+  .pill.paid{color:var(--ok);border-color:#1c4a35}
+  .pill.refunded,.pill.cancelled{color:var(--bad);border-color:#4a2020}
+  .pill.fulfilled{color:var(--accent);border-color:#1f3a63}
+  .pill.pending{color:var(--warn);border-color:#4a3a17}
+  button{font:inherit;font-size:13px;padding:7px 15px;border-radius:8px;cursor:pointer;
+         border:1px solid #2f5fa8;background:#1c3354;color:#cfe0ff;transition:.15s}
+  button:hover{background:#24426b}
+  button.ghost{background:transparent;border-color:var(--line);color:var(--dim)}
+  button.ghost:hover{color:var(--text);border-color:#3a4150}
+  pre{white-space:pre-wrap;word-break:break-word;background:var(--panel2);
+      border:1px solid var(--line);border-radius:8px;padding:14px;margin:0;font-size:13px;
+      font-family:"Cascadia Mono",Consolas,monospace;line-height:1.7}
+  .email{border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:12px;
+         background:var(--panel)}
+  .email h3{margin:0 0 8px;font-size:14px}
+  .meta{font-size:12px;color:var(--dim);display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+  .empty{color:var(--dim);padding:18px;text-align:center;border:1px dashed var(--line);
+         border-radius:var(--radius)}
+  .grid2{display:grid;grid-template-columns:1fr 340px;gap:20px}
+  @media(max-width:900px){.grid2{grid-template-columns:1fr}}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13px}
+  .kv dt{color:var(--dim)}
+  .kv dd{margin:0}
+</style>
+</head>
+<body>
+<header>
+  <h1>Shopify 运营控制台</h1>
+  <span class="badge {{ 'mock' if mode == 'mock' else 'live' }}">
+    {{ 'MOCK · 内置假数据' if mode == 'mock' else mode }}
+  </span>
+  <span class="badge">邮件引擎：{{ engine }}</span>
+  <span class="spacer"></span>
+  <form method="post" action="/sync" style="margin:0">
+    <button type="submit">同步订单</button>
+  </form>
+</header>
+
+<main>
+  <!-- 指标卡 -->
+  <section>
+    <h2>运营指标</h2>
+    <div class="cards">
+      <div class="card"><div class="k">订单总数</div><div class="v">{{ stats.orders }}</div></div>
+      <div class="card"><div class="k">商品行数</div><div class="v">{{ stats.line_items }}</div></div>
+      <div class="card"><div class="k">含退款的订单</div><div class="v">{{ stats.orders_with_refund }}</div></div>
+      <div class="card"><div class="k">退款总额</div>
+        <div class="v">{{ '%.2f'|format(stats.refund_total_amount) }}</div></div>
+      <div class="card"><div class="k">已生成邮件</div><div class="v">{{ stats.emails }}</div></div>
+      <div class="card"><div class="k">覆盖订单</div><div class="v">{{ stats.orders_with_email }}</div></div>
+    </div>
+  </section>
+
+  <div class="grid2">
+    <!-- 订单列表 -->
+    <section>
+      <h2>最近订单</h2>
+      {% if orders %}
+      <table>
+        <thead>
+          <tr>
+            <th>订单号</th><th>客户</th><th class="num">金额</th>
+            <th>支付</th><th>履约</th><th>场景</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for o in orders %}
+          <tr>
+            <td><a href="/order/{{ o.id }}">{{ o.order_number }}</a></td>
+            <td>{{ o.customer_name }}</td>
+            <td class="num">{{ o.currency }} {{ '%.2f'|format(o.total_price) }}</td>
+            <td><span class="pill {{ o.financial_status }}">{{ o.financial_status or '—' }}</span></td>
+            <td><span class="pill {{ o.fulfillment_status }}">{{ o.fulfillment_status or '—' }}</span></td>
+            <td><span class="pill">{{ scenario_labels.get(o.scenario, o.scenario) }}</span></td>
+            <td><a href="/order/{{ o.id }}">详情 →</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty">还没有订单。点右上角「同步订单」先拉一批数据（mock 模式不会连真实店铺）。</div>
+      {% endif %}
+    </section>
+
+    <!-- 最近邮件 -->
+    <section>
+      <h2>最近生成的邮件</h2>
+      {% if recent_emails %}
+        {% for e in recent_emails %}
+        <div class="email">
+          <h3>{{ e.subject }}</h3>
+          <div class="meta">
+            <span>{{ e.order_number }}</span>
+            <span>{{ scenario_labels.get(e.scenario, e.scenario) }}</span>
+            <span>{{ e.provider }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty">还没有生成过邮件。</div>
+      {% endif %}
+    </section>
+  </div>
+</main>
+</body>
+</html>
