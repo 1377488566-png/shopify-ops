@@ -35,6 +35,18 @@ from shopify_client import ShopifyClient
 
 log = setup_logging("webhook")
 
+
+def _sanitize_log(value: object, limit: int = 200) -> str:
+    """把外部传入的值转成可安全写进日志的字符串。
+
+    为什么要做：topic / order name / 请求头都来自外部请求，直接拼进日志时，
+    攻击者可以塞 \n 或 \r 伪造出一条完整的假日志行（Log Injection），
+    用来掩盖真实攻击痕迹。这里剥掉所有控制字符并截断长度。
+    """
+    text = str(value if value is not None else "")
+    text = "".join(ch for ch in text if ch.isprintable() or ch == " ")
+    return text[:limit]
+
 #: 单次请求体最大 2MB，防止被塞爆内存
 MAX_BODY_BYTES: Final[int] = 2 * 1024 * 1024
 
@@ -59,11 +71,12 @@ def handle_event(topic: str, payload: dict[str, Any], config: Config) -> None:
 
         if topic.startswith("orders/"):
             upsert_order(conn, payload)
-            log.info("订单已入库：%s", payload.get("name") or payload.get("id"))
+            log.info("订单已入库：%s", _sanitize_log(payload.get("name") or payload.get("id")))
 
         elif topic.startswith("refunds/"):
             order_id = payload.get("order_id") or (payload.get("order") or {}).get("id")
-            log.info("收到退款事件 refund_id=%s order_id=%s", payload.get("id"), order_id)
+            log.info("收到退款事件 refund_id=%s order_id=%s",
+                 _sanitize_log(payload.get("id")), _sanitize_log(order_id))
             if not order_id:
                 log.warning("退款事件里没有 order_id，跳过")
                 return
@@ -76,10 +89,10 @@ def handle_event(topic: str, payload: dict[str, Any], config: Config) -> None:
                     for order in fresh:
                         if int(order.get("id", 0)) == int(order_id):
                             upsert_order(conn, order)
-                            log.info("已根据退款事件刷新订单 %s", order.get("name"))
+                            log.info("已根据退款事件刷新订单 %s", _sanitize_log(order.get("name")))
                             break
         else:
-            log.info("未处理的主题：%s", topic)
+            log.info("未处理的主题：%s", _sanitize_log(topic))
     finally:
         conn.close()
 
@@ -134,16 +147,16 @@ def make_handler(config: Config) -> type[BaseHTTPRequestHandler]:
             # 1) 验签（mock 模式下允许跳过，方便本地拿 curl 自测）
             if config.webhook_secret:
                 if not verify_hmac(raw_body, header_hmac, config.webhook_secret):
-                    log.warning("验签失败，拒绝处理（topic=%s）", topic)
+                    log.warning("验签失败，拒绝处理（topic=%s）", _sanitize_log(topic))
                     self._reply(401, "invalid signature\n")
                     return
-                log.info("验签通过 topic=%s", topic)
+                log.info("验签通过 topic=%s", _sanitize_log(topic))
             elif not config.is_mock:
                 log.error("缺少 SHOPIFY_WEBHOOK_SECRET，拒绝处理真实店铺事件")
                 self._reply(500, "webhook secret not configured\n")
                 return
             else:
-                log.info("mock 模式：跳过验签（topic=%s）", topic)
+                log.info("mock 模式：跳过验签（topic=%s）", _sanitize_log(topic))
 
             # 2) 解析
             try:

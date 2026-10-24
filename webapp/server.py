@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -85,6 +85,21 @@ def _auto_seed_once() -> None:
         log.info("AUTO_SEED 完成：%s", res)
     except Exception as exc:  # 播种失败不能拖垮服务启动
         log.warning("AUTO_SEED 失败（不影响服务启动）：%s", exc)
+
+
+def _order_redirect(order_id: object) -> RedirectResponse:
+    """只允许跳回本站在订单页，绝不接受任意外部 URL。
+
+    为什么不用 RedirectResponse(f"/order/{order_id}") 了事：
+    一旦哪天有人把用户传入的字符串直接拼进来，这里就会变成开放重定向
+    （钓鱼者可以构造 /... -> evil.com 的链接）。这里强制 int 转换 +
+    路由白名单，从根上堵住。
+    """
+    try:
+        oid = int(order_id)  # 非数字直接抛异常，走兜底
+    except (TypeError, ValueError):
+        return RedirectResponse("/", status_code=303)
+    return RedirectResponse(f"/order/{oid}", status_code=303)
 
 
 def get_config() -> Config:
@@ -290,7 +305,7 @@ def action_generate_email(order_id: int) -> RedirectResponse:
             )
     finally:
         conn.close()
-    return RedirectResponse(f"/order/{order_id}", status_code=303)
+    return _order_redirect(order_id)
 
 
 @app.post("/email/{email_id}/send")
@@ -311,7 +326,7 @@ def action_send_email(email_id: int, order_id: int = 0) -> RedirectResponse:
         log.info("发送结果 email_id=%s mode=%s ok=%s", email_id, result.mode, result.ok)
     finally:
         conn.close()
-    return RedirectResponse(f"/order/{target}", status_code=303)
+    return _order_redirect(target)
 
 
 @app.post("/email/{email_id}/retry")
@@ -326,7 +341,7 @@ def action_retry_email(email_id: int, order_id: int = 0) -> RedirectResponse:
         reset_email_to_draft(conn, email_id)
     finally:
         conn.close()
-    return RedirectResponse(f"/order/{target}", status_code=303)
+    return _order_redirect(target)
 
 
 @app.post("/sync")
