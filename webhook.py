@@ -27,7 +27,7 @@ import hashlib
 import hmac
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Any, Final
+from typing import Any
 
 from config import Config, setup_logging
 from db import connect, init_db, upsert_order
