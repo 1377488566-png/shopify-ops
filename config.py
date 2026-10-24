@@ -114,6 +114,7 @@ class Config:
     smtp_starttls: bool
     mock: bool
     db_path: Path
+    auto_seed: bool = False
 
     # ---------- 派生属性 ----------
 
@@ -174,4 +175,5 @@ class Config:
             smtp_starttls=_get_flag("SMTP_STARTTLS", default=True),
             mock=_get_flag("MOCK", default=False) or force_mock,
             db_path=Path(db_raw) if db_raw else DEFAULT_DB_PATH,
+            auto_seed=_get_flag("AUTO_SEED", default=False),
         )

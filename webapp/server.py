@@ -52,12 +52,40 @@ app = FastAPI(
     version="1.0.0",
 )
 
+
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent / "templates"))
 
 
 # --------------------------------------------------------------------------
 # 基础设施
 # --------------------------------------------------------------------------
+
+def _auto_seed_once() -> None:
+    """空库自动播种：AUTO_SEED=true 且一条订单都没有时，跑一次 mock 同步。
+
+    存在的意义：Render 免费实例重启后数据会丢，面试官打开链接不该看到空页面。
+    只在**确实为空**时播种，不会覆盖任何已有数据，也不会反复灌重复订单
+    （mock 数据带唯一 order_number，同步本身幂等）。
+    """
+    cfg = get_config()
+    if not cfg.auto_seed:
+        return
+    conn = open_db()
+    try:
+        if int(conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0] or 0) > 0:
+            return
+        log.info("AUTO_SEED 已开启且库为空，自动灌入 mock 数据")
+    finally:
+        conn.close()
+    try:
+        from config import Config as _Cfg
+
+        seed_cfg = _Cfg.from_env(force_mock=True)
+        res = run_sync(seed_cfg, full=True)
+        log.info("AUTO_SEED 完成：%s", res)
+    except Exception as exc:  # 播种失败不能拖垮服务启动
+        log.warning("AUTO_SEED 失败（不影响服务启动）：%s", exc)
+
 
 def get_config() -> Config:
     """每次调用都重新读环境变量，方便改 .env 后不重启也能生效。"""
@@ -305,3 +333,8 @@ def action_retry_email(email_id: int, order_id: int = 0) -> RedirectResponse:
 def action_sync() -> RedirectResponse:
     run_sync(get_config())
     return RedirectResponse("/", status_code=303)
+
+
+# 服务启动时执行一次：只有 AUTO_SEED=true 且库为空才真正播种。
+# 放在文件末尾，确保 get_config / open_db / run_sync 都已定义。
+_auto_seed_once()  # 服务启动时执行一次（空库才真正播种）
