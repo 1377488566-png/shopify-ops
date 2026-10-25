@@ -68,7 +68,7 @@ def _auto_seed_once() -> None:
     （mock 数据带唯一 order_number，同步本身幂等）。
     """
     cfg = get_config()
-    if not cfg.auto_seed:
+    if not cfg.auto_seed_enabled:
         return
     conn = open_db()
     try:

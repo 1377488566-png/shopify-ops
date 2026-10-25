@@ -67,6 +67,19 @@ def _get_flag(name: str, default: bool = False) -> bool:
     return raw.strip().lower() in _TRUTHY
 
 
+
+def _get_tri_flag(name: str) -> bool | None:
+    """读三态开关：返回 True / False / None（未设置）。
+
+    为什么要三态：AUTO_SEED 需要区分「用户明确关掉」和「用户根本没配」。
+    如果统一按 False 处理，那么在 Render 这类不方便配环境变量的平台上，
+    演示实例永远是空列表。返回 None 让上层按运行模式给默认值。
+    """
+    raw = _get(name).strip().lower()
+    if raw == "":
+        return None
+    return raw in ("1", "true", "yes", "on")
+
 def setup_logging(name: str = "app", level: int = logging.INFO) -> logging.Logger:
     """建一个同时输出到控制台 + `logs/<name>.log` 的 logger。
 
@@ -114,7 +127,10 @@ class Config:
     smtp_starttls: bool
     mock: bool
     db_path: Path
-    auto_seed: bool = False
+    # None 表示"未显式配置"，由下面的 property 按运行模式决定
+    auto_seed_raw: bool | None = None
+    # 兜底：让显式传入 auto_seed=... 的旧代码路径仍然可用
+    auto_seed: bool | None = None
 
     # ---------- 派生属性 ----------
 
@@ -122,6 +138,20 @@ class Config:
     def is_mock(self) -> bool:
         """是否走 mock：显式开了 MOCK，或者压根没配好 Shopify 凭据。"""
         return self.mock or not self.shop or not self.access_token
+
+    @property
+    def auto_seed_enabled(self) -> bool:
+        """启动时是否允许自动播种。
+
+        规则（安全优先）：
+          1. 显式配置优先：AUTO_SEED=true/false 说了算
+          2. 未配置时只在 mock 模式开启——真实店铺绝不自动灌 mock 数据，
+             否则会把生产库污染成假订单，代价远大于演示时的便利
+        """
+        explicit = self.auto_seed if self.auto_seed is not None else self.auto_seed_raw
+        if explicit is not None:
+            return explicit
+        return self.is_mock
 
     @property
     def has_llm(self) -> bool:
@@ -175,5 +205,9 @@ class Config:
             smtp_starttls=_get_flag("SMTP_STARTTLS", default=True),
             mock=_get_flag("MOCK", default=False) or force_mock,
             db_path=Path(db_raw) if db_raw else DEFAULT_DB_PATH,
-            auto_seed=_get_flag("AUTO_SEED", default=False),
+            # AUTO_SEED 三态：
+            #   显式有值      -> 按用户设置
+            #   完全没设置    -> 交给 Config.auto_seed 属性按 is_mock 决定
+            # 这里用 None 表示「未设置」，区别于显式 false。
+            auto_seed_raw=_get_tri_flag("AUTO_SEED"),
         )
