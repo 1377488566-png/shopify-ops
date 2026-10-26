@@ -126,7 +126,19 @@ Web 层只做三件事，**没有改动原有任何模块**：
 2. 把 CLI 里那几段「取数 → 生成 → 落库」搬成路由，复用 `db.py` / `email_gen.py` / `sync.py`；
 3. 页面服务端渲染（Jinja2 + 内联 CSS），**零前端构建**，任何机器 clone 下来就能开。
 
-### 3.2 公网部署（Render 免费层）
+### 3.2 公网部署（阿里云 ECS）
+
+不依赖 PaaS、自己从零搭的一套：**Ubuntu 24.04 + systemd 托管 + Nginx 反向代理**。
+完整步骤（含每一步的预期输出与踩坑点）见 **[docs/deploy-aliyun.md](docs/deploy-aliyun.md)**。
+
+要点：
+
+- `systemd` 托管，`Restart=always` —— 进程挂了 3 秒自动拉起，开机自启
+- uvicorn 只监听 `127.0.0.1:8000`，由 Nginx 对外，8000 不暴露到公网
+- 实测占用：**内存峰值 200 MB 以内**，2 vCPU / 2 GiB 机器余量充足
+- 与 Render 的关键差别：**磁盘持久**，重启不会丢库；没有冷启动
+
+### 3.3 公网部署（Render 免费层）
 
 仓库里带了 `render.yaml`，在 [Render](https://render.com) 上选 **New → Blueprint** 指向本仓库即可，
 会自动按下面的配置建服务：
